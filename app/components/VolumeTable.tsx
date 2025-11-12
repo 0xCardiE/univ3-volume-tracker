@@ -16,7 +16,7 @@ interface VolumeTableProps {
   pairAddress: string
 }
 
-type DayRange = 30 | 60 | 120 | 365
+type DayRange = 30 | 60 | 90 | 120 | 365
 type FeeTier = 0.01 | 0.05 | 0.3 | 1
 
 export function VolumeTable({ pairAddress }: VolumeTableProps) {
@@ -261,7 +261,7 @@ export function VolumeTable({ pairAddress }: VolumeTableProps) {
             Time Range
           </label>
           <div className="flex gap-2 flex-wrap">
-            {([30, 60, 120, 365] as DayRange[]).map((days) => (
+            {([30, 60, 90, 120, 365] as DayRange[]).map((days) => (
               <button
                 key={days}
                 onClick={() => setDayRange(days)}
