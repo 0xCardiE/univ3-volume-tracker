@@ -1,11 +1,5 @@
 import { GraphQLClient, gql } from 'graphql-request'
 
-// Uniswap V3 Subgraph endpoint for Ethereum mainnet
-// Using The Graph's decentralized network endpoint with API key
-const UNISWAP_V3_SUBGRAPH = process.env.NEXT_PUBLIC_UNISWAP_V3_SUBGRAPH || ''
-
-const client = new GraphQLClient(UNISWAP_V3_SUBGRAPH)
-
 const PAIR_DAY_DATA_QUERY = gql`
   query GetPairDayData($pairAddress: String!, $first: Int!) {
     pool(id: $pairAddress) {
@@ -57,8 +51,9 @@ interface PoolData {
   poolDayDatas: PoolDayData[]
 }
 
-export async function fetchPairDayData(pairAddress: string, days: number = 30) {
+export async function fetchPairDayData(pairAddress: string, days: number = 30, subgraphUrl: string) {
   try {
+    const client = new GraphQLClient(subgraphUrl)
     const data = await client.request<PoolData>(PAIR_DAY_DATA_QUERY, {
       pairAddress: pairAddress.toLowerCase(),
       first: days,

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { fetchPairDayData } from '../utils/uniswap'
-import { fetchPoolContractInfo, type PoolContractInfo } from '../utils/etherscan'
+import { fetchPoolContractInfo, type PoolContractInfo, setExplorerConfig } from '../utils/etherscan'
 
 interface DayData {
   date: string
@@ -14,12 +14,15 @@ interface DayData {
 
 interface VolumeTableProps {
   pairAddress: string
+  subgraphUrl: string
+  chainId: string
+  explorerUrl: string
 }
 
 type DayRange = 30 | 60 | 90 | 120 | 365
 type FeeTier = 0.01 | 0.05 | 0.3 | 1
 
-export function VolumeTable({ pairAddress }: VolumeTableProps) {
+export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: VolumeTableProps) {
   const [data, setData] = useState<DayData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -35,8 +38,15 @@ export function VolumeTable({ pairAddress }: VolumeTableProps) {
       setLoading(true)
       setError(null)
       
+      // Reset contract info when changing pools
+      setContractInfo(null)
+      setShowContractInfo(false)
+      
       try {
-        const result = await fetchPairDayData(pairAddress.toLowerCase(), dayRange)
+        // Set the explorer config
+        setExplorerConfig(chainId, explorerUrl)
+        
+        const result = await fetchPairDayData(pairAddress.toLowerCase(), dayRange, subgraphUrl)
         setData(result.dayData)
         setPairInfo(result.pairInfo)
       } catch (err) {
@@ -46,10 +56,10 @@ export function VolumeTable({ pairAddress }: VolumeTableProps) {
       }
     }
 
-    if (pairAddress) {
+    if (pairAddress && subgraphUrl) {
       fetchData()
     }
-  }, [pairAddress, dayRange])
+  }, [pairAddress, dayRange, subgraphUrl, chainId, explorerUrl])
 
   const formatNumber = (value: string | number) => {
     const num = typeof value === 'string' ? parseFloat(value) : value
@@ -222,7 +232,7 @@ export function VolumeTable({ pairAddress }: VolumeTableProps) {
                 <div className="md:col-span-2 p-2 bg-white/5 rounded">
                   <div className="text-gray-400 text-xs mb-1">Token0 Address</div>
                   <a 
-                    href={`https://etherscan.io/address/${contractInfo.token0}`}
+                    href={`${explorerUrl}/address/${contractInfo.token0}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-400 hover:text-blue-300 font-mono text-xs break-all inline-flex items-center gap-1"
@@ -236,7 +246,7 @@ export function VolumeTable({ pairAddress }: VolumeTableProps) {
                 <div className="md:col-span-2 p-2 bg-white/5 rounded">
                   <div className="text-gray-400 text-xs mb-1">Token1 Address</div>
                   <a 
-                    href={`https://etherscan.io/address/${contractInfo.token1}`}
+                    href={`${explorerUrl}/address/${contractInfo.token1}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-400 hover:text-blue-300 font-mono text-xs break-all inline-flex items-center gap-1"

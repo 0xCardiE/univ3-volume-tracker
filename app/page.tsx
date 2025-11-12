@@ -3,54 +3,82 @@
 import { useState } from 'react'
 import { VolumeTable } from './components/VolumeTable'
 
-export default function Home() {
-  const [pairAddress, setPairAddress] = useState('0x5696c2c2fcb7e304a5b9faaec9cd37d369c9d067')
-  const [searchAddress, setSearchAddress] = useState('0x5696c2c2fcb7e304a5b9faaec9cd37d369c9d067')
+type PoolType = 'ethereum' | 'gnosis'
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setSearchAddress(pairAddress)
-  }
+const POOLS = {
+  ethereum: {
+    address: '0x5696c2c2fcb7e304a5b9faaec9cd37d369c9d067',
+    name: 'Ethereum',
+    dex: 'Uniswap V3',
+    subgraphUrl: process.env.NEXT_PUBLIC_UNISWAP_V3_SUBGRAPH || '',
+    chainId: '1',
+    explorerUrl: 'https://etherscan.io',
+  },
+  gnosis: {
+    address: '0x6f30b7cf40cb423c1d23478a9855701ecf43931e',
+    name: 'Gnosis',
+    dex: 'SushiSwap V3',
+    subgraphUrl: `https://gateway.thegraph.com/api/${process.env.NEXT_PUBLIC_UNISWAP_V3_SUBGRAPH?.split('/api/')[1]?.split('/')[0] || 'd86df69a0c7532b764e88bb49b5ee5c4'}/subgraphs/id/GFvGfWBX47RNnvgwL6SjAAf2mrqrPxF91eA53F4eNegW`,
+    chainId: '100',
+    explorerUrl: 'https://gnosisscan.io',
+  },
+}
+
+export default function Home() {
+  const [selectedPool, setSelectedPool] = useState<PoolType>('ethereum')
+  
+  const currentPool = POOLS[selectedPool]
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold text-white mb-4">
-            Uniswap V3 Volume Tracker
+            Pool Volume Tracker
           </h1>
           <p className="text-gray-300 text-lg">
-            Track daily trading volumes for any Uniswap V3 pair
+            Track daily trading volumes across chains
           </p>
         </div>
 
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 mb-8">
-          <form onSubmit={handleSearch} className="flex gap-4">
-            <div className="flex-1">
-              <label htmlFor="pairAddress" className="block text-sm font-medium text-gray-200 mb-2">
-                Pair Address
-              </label>
-              <input
-                type="text"
-                id="pairAddress"
-                value={pairAddress}
-                onChange={(e) => setPairAddress(e.target.value)}
-                className="w-full px-4 py-3 bg-white/20 border border-gray-300/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                placeholder="Enter Uniswap V3 pair address"
-              />
-            </div>
-            <div className="flex items-end">
-              <button
-                type="submit"
-                className="px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-semibold rounded-lg hover:from-pink-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-200 shadow-lg"
-              >
-                Search
-              </button>
-            </div>
-          </form>
+          <div className="flex gap-4 justify-center flex-wrap">
+            <button
+              onClick={() => setSelectedPool('ethereum')}
+              className={`px-8 py-4 rounded-lg font-semibold transition-all duration-200 ${
+                selectedPool === 'ethereum'
+                  ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg scale-105'
+                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
+              }`}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-lg">{POOLS.ethereum.name}</span>
+                <span className="text-xs opacity-75">{POOLS.ethereum.dex}</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setSelectedPool('gnosis')}
+              className={`px-8 py-4 rounded-lg font-semibold transition-all duration-200 ${
+                selectedPool === 'gnosis'
+                  ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg scale-105'
+                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
+              }`}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-lg">{POOLS.gnosis.name}</span>
+                <span className="text-xs opacity-75">{POOLS.gnosis.dex}</span>
+              </div>
+            </button>
+          </div>
         </div>
 
-        <VolumeTable pairAddress={searchAddress} />
+        <VolumeTable 
+          pairAddress={currentPool.address}
+          subgraphUrl={currentPool.subgraphUrl}
+          chainId={currentPool.chainId}
+          explorerUrl={currentPool.explorerUrl}
+        />
       </div>
     </main>
   )

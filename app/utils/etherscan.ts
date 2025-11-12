@@ -1,8 +1,20 @@
 // Etherscan API utilities for fetching contract information
 
 const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || ''
-const ETHERSCAN_API_BASE = 'https://api.etherscan.io/v2/api' // V2 API endpoint
-const ETHEREUM_CHAIN_ID = '1' // Ethereum mainnet
+
+// Simplified config - just need chainId and explorer URL
+let currentChainId = '1'
+let currentExplorerUrl = 'https://etherscan.io'
+
+const API_BASES: Record<string, string> = {
+  '1': 'https://api.etherscan.io/v2/api', // Ethereum
+  '100': 'https://api.gnosisscan.io/api', // Gnosis
+}
+
+export function setExplorerConfig(chainId: string, explorerUrl: string) {
+  currentChainId = chainId
+  currentExplorerUrl = explorerUrl
+}
 
 export interface PoolContractInfo {
   fee: string
@@ -35,8 +47,9 @@ async function callReadFunction(contractAddress: string, functionName: string): 
     throw new Error(`Unknown function: ${functionName}`)
   }
 
-  const url = new URL(ETHERSCAN_API_BASE)
-  url.searchParams.append('chainid', ETHEREUM_CHAIN_ID) // Required for V2 API
+  const apiBase = API_BASES[currentChainId] || API_BASES['1']
+  const url = new URL(apiBase)
+  url.searchParams.append('chainid', currentChainId) // Required for V2 API
   url.searchParams.append('module', 'proxy')
   url.searchParams.append('action', 'eth_call')
   url.searchParams.append('to', contractAddress)
@@ -44,7 +57,7 @@ async function callReadFunction(contractAddress: string, functionName: string): 
   url.searchParams.append('tag', 'latest')
   url.searchParams.append('apikey', ETHERSCAN_API_KEY)
 
-  console.log(`Calling Etherscan V2 API for ${functionName}:`, url.toString())
+  console.log(`Calling Explorer API for ${functionName} on chain ${currentChainId}:`, url.toString())
 
   const response = await fetch(url.toString())
   const data = await response.json()
