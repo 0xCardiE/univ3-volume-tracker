@@ -15,7 +15,7 @@ interface VolumeTableProps {
   pairAddress: string
 }
 
-type DayRange = 30 | 60 | 120
+type DayRange = 30 | 60 | 120 | 365
 type FeeTier = 0.01 | 0.05 | 0.3 | 1
 
 export function VolumeTable({ pairAddress }: VolumeTableProps) {
@@ -23,8 +23,8 @@ export function VolumeTable({ pairAddress }: VolumeTableProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [pairInfo, setPairInfo] = useState<{ token0: string; token1: string } | null>(null)
-  const [dayRange, setDayRange] = useState<DayRange>(30)
-  const [feeTier, setFeeTier] = useState<FeeTier>(0.3)
+  const [dayRange, setDayRange] = useState<DayRange>(60)
+  const [feeTier, setFeeTier] = useState<FeeTier>(1)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -150,8 +150,8 @@ export function VolumeTable({ pairAddress }: VolumeTableProps) {
           <label className="block text-sm font-medium text-gray-300 mb-2">
             Time Range
           </label>
-          <div className="flex gap-2">
-            {([30, 60, 120] as DayRange[]).map((days) => (
+          <div className="flex gap-2 flex-wrap">
+            {([30, 60, 120, 365] as DayRange[]).map((days) => (
               <button
                 key={days}
                 onClick={() => setDayRange(days)}
@@ -172,18 +172,35 @@ export function VolumeTable({ pairAddress }: VolumeTableProps) {
           <label className="block text-sm font-medium text-gray-300 mb-2">
             Fee Tier (for fee calculations)
           </label>
-          <div className="flex gap-2">
-            {([0.01, 0.05, 0.3, 1] as FeeTier[]).map((tier) => (
+          <div className="flex gap-2 flex-wrap">
+            {([
+              { tier: 0.01, encoded: 100, description: 'Stablecoin pairs' },
+              { tier: 0.05, encoded: 500, description: 'Low volatility pairs' },
+              { tier: 0.3, encoded: 3000, description: 'Most common pairs' },
+              { tier: 1, encoded: 10000, description: 'Exotic/low liquidity' }
+            ] as { tier: FeeTier; encoded: number; description: string }[]).map(({ tier, encoded, description }) => (
               <button
                 key={tier}
                 onClick={() => setFeeTier(tier)}
-                className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${
+                title={`${tier}% fee tier (encoded as ${encoded})\n${description}`}
+                className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 relative group ${
                   feeTier === tier
                     ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg'
                     : 'bg-white/5 text-gray-300 hover:bg-white/10'
                 }`}
               >
-                {tier}%
+                <span>{tier}%</span>
+                {/* Tooltip */}
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 z-10">
+                  <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-xl border border-gray-700">
+                    <div className="font-bold text-pink-400 mb-1">{tier}% Fee Tier</div>
+                    <div className="text-gray-300 mb-1">Encoded: {encoded}</div>
+                    <div className="text-gray-400 text-[10px]">{description}</div>
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                      <div className="border-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                </div>
               </button>
             ))}
           </div>
