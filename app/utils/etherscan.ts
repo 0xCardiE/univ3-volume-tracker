@@ -6,10 +6,8 @@ const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || ''
 let currentChainId = '1'
 let currentExplorerUrl = 'https://etherscan.io'
 
-const API_BASES: Record<string, string> = {
-  '1': 'https://api.etherscan.io/v2/api', // Ethereum
-  '100': 'https://api.gnosisscan.io/api', // Gnosis
-}
+// Use Etherscan V2 API for all chains - it supports multiple chains via chainid parameter
+const ETHERSCAN_API_BASE = 'https://api.etherscan.io/v2/api'
 
 export function setExplorerConfig(chainId: string, explorerUrl: string) {
   currentChainId = chainId
@@ -47,8 +45,7 @@ async function callReadFunction(contractAddress: string, functionName: string): 
     throw new Error(`Unknown function: ${functionName}`)
   }
 
-  const apiBase = API_BASES[currentChainId] || API_BASES['1']
-  const url = new URL(apiBase)
+  const url = new URL(ETHERSCAN_API_BASE)
   url.searchParams.append('chainid', currentChainId) // Required for V2 API
   url.searchParams.append('module', 'proxy')
   url.searchParams.append('action', 'eth_call')
