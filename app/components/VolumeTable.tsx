@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { fetchPairDayData } from '../utils/uniswap'
+import { fetchPoolContractInfo, type PoolContractInfo } from '../utils/etherscan'
 
 interface DayData {
   date: string
@@ -25,6 +26,9 @@ export function VolumeTable({ pairAddress }: VolumeTableProps) {
   const [pairInfo, setPairInfo] = useState<{ token0: string; token1: string } | null>(null)
   const [dayRange, setDayRange] = useState<DayRange>(60)
   const [feeTier, setFeeTier] = useState<FeeTier>(1)
+  const [contractInfo, setContractInfo] = useState<PoolContractInfo | null>(null)
+  const [loadingContract, setLoadingContract] = useState(false)
+  const [showContractInfo, setShowContractInfo] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -93,6 +97,26 @@ export function VolumeTable({ pairAddress }: VolumeTableProps) {
 
   const summaries = calculateSummaries()
 
+  const handleFetchContractInfo = async () => {
+    if (contractInfo) {
+      // Toggle visibility if already loaded
+      setShowContractInfo(!showContractInfo)
+      return
+    }
+
+    setLoadingContract(true)
+    try {
+      const info = await fetchPoolContractInfo(pairAddress)
+      setContractInfo(info)
+      setShowContractInfo(true)
+    } catch (err) {
+      console.error('Failed to fetch contract info:', err)
+      alert('Failed to fetch contract info. Make sure you have a valid Etherscan API key.')
+    } finally {
+      setLoadingContract(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-12">
@@ -139,7 +163,93 @@ export function VolumeTable({ pairAddress }: VolumeTableProps) {
           <h2 className="text-2xl font-bold text-white mb-2">
             {pairInfo.token0} / {pairInfo.token1}
           </h2>
-          <p className="text-gray-300 text-sm font-mono">{pairAddress}</p>
+          <p className="text-gray-300 text-sm font-mono mb-3">{pairAddress}</p>
+          
+          {/* Contract Info Button */}
+          <button
+            onClick={handleFetchContractInfo}
+            disabled={loadingContract}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-gray-300 hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loadingContract ? (
+              <>
+                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Loading contract info...
+              </>
+            ) : (
+              <>
+                <svg 
+                  className={`w-4 h-4 transition-transform duration-200 ${showContractInfo ? 'rotate-180' : ''}`} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                Contract Info (from Etherscan)
+              </>
+            )}
+          </button>
+
+          {/* Collapsible Contract Info */}
+          {showContractInfo && contractInfo && (
+            <div className="mt-4 p-4 bg-black/20 rounded-lg border border-white/10 animate-slideDown">
+              <h3 className="text-sm font-semibold text-pink-400 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Contract Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div className="p-2 bg-white/5 rounded">
+                  <div className="text-gray-400 text-xs mb-1">Fee Tier</div>
+                  <div className="text-white font-semibold">
+                    {contractInfo.feePercentage}%
+                  </div>
+                  <div className="text-gray-500 text-xs font-mono">Encoded: {contractInfo.fee}</div>
+                </div>
+                <div className="p-2 bg-white/5 rounded">
+                  <div className="text-gray-400 text-xs mb-1">Tick Spacing</div>
+                  <div className="text-white font-mono">{contractInfo.tickSpacing}</div>
+                </div>
+                <div className="md:col-span-2 p-2 bg-white/5 rounded">
+                  <div className="text-gray-400 text-xs mb-1">Current Liquidity</div>
+                  <div className="text-white font-mono text-lg">{BigInt(contractInfo.liquidity).toLocaleString()}</div>
+                </div>
+                <div className="md:col-span-2 p-2 bg-white/5 rounded">
+                  <div className="text-gray-400 text-xs mb-1">Token0 Address</div>
+                  <a 
+                    href={`https://etherscan.io/address/${contractInfo.token0}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 font-mono text-xs break-all inline-flex items-center gap-1"
+                  >
+                    {contractInfo.token0}
+                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                </div>
+                <div className="md:col-span-2 p-2 bg-white/5 rounded">
+                  <div className="text-gray-400 text-xs mb-1">Token1 Address</div>
+                  <a 
+                    href={`https://etherscan.io/address/${contractInfo.token1}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 font-mono text-xs break-all inline-flex items-center gap-1"
+                  >
+                    {contractInfo.token1}
+                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
