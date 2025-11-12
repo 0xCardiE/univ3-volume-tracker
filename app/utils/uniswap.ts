@@ -7,7 +7,7 @@ const UNISWAP_V3_SUBGRAPH = process.env.NEXT_PUBLIC_UNISWAP_V3_SUBGRAPH || ''
 const client = new GraphQLClient(UNISWAP_V3_SUBGRAPH)
 
 const PAIR_DAY_DATA_QUERY = gql`
-  query GetPairDayData($pairAddress: String!) {
+  query GetPairDayData($pairAddress: String!, $first: Int!) {
     pool(id: $pairAddress) {
       id
       token0 {
@@ -20,7 +20,7 @@ const PAIR_DAY_DATA_QUERY = gql`
       }
     }
     poolDayDatas(
-      first: 30
+      first: $first
       orderBy: date
       orderDirection: desc
       where: { pool: $pairAddress }
@@ -57,10 +57,11 @@ interface PoolData {
   poolDayDatas: PoolDayData[]
 }
 
-export async function fetchPairDayData(pairAddress: string) {
+export async function fetchPairDayData(pairAddress: string, days: number = 30) {
   try {
     const data = await client.request<PoolData>(PAIR_DAY_DATA_QUERY, {
       pairAddress: pairAddress.toLowerCase(),
+      first: days,
     })
 
     if (!data.pool) {
