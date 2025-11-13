@@ -10,6 +10,8 @@ interface DayData {
   volumeToken0: string
   volumeToken1: string
   tvlUSD: string
+  feesUSD: string
+  txCount: string
 }
 
 interface VolumeTableProps {
@@ -20,7 +22,6 @@ interface VolumeTableProps {
 }
 
 type DayRange = 30 | 60 | 90 | 120 | 365
-type FeeTier = 0.01 | 0.05 | 0.3 | 1
 
 export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: VolumeTableProps) {
   const [data, setData] = useState<DayData[]>([])
@@ -36,7 +37,6 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: 
     totalValueLockedUSD?: string
   } | null>(null)
   const [dayRange, setDayRange] = useState<DayRange>(60)
-  const [feeTier, setFeeTier] = useState<FeeTier>(1)
   const [contractInfo, setContractInfo] = useState<PoolContractInfo | null>(null)
   const [loadingContract, setLoadingContract] = useState(false)
   const [showContractInfo, setShowContractInfo] = useState(false)
@@ -89,11 +89,6 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: 
     return num.toFixed(2)
   }
 
-  const calculateFees = (volumeUSD: string) => {
-    const volume = parseFloat(volumeUSD)
-    return volume * (feeTier / 100)
-  }
-
   // Calculate summaries
   const calculateSummaries = () => {
     if (data.length === 0) return null
@@ -102,14 +97,16 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: 
     const totalVolumeToken0 = data.reduce((sum, day) => sum + parseFloat(day.volumeToken0), 0)
     const totalVolumeToken1 = data.reduce((sum, day) => sum + parseFloat(day.volumeToken1), 0)
     const avgTVL = data.reduce((sum, day) => sum + parseFloat(day.tvlUSD), 0) / data.length
-    const totalFees = data.reduce((sum, day) => sum + calculateFees(day.volumeUSD), 0)
+    const totalFees = data.reduce((sum, day) => sum + parseFloat(day.feesUSD || '0'), 0)
+    const totalTxCount = data.reduce((sum, day) => sum + parseInt(day.txCount || '0'), 0)
     
     return {
       totalVolumeUSD,
       totalVolumeToken0,
       totalVolumeToken1,
       avgTVL,
-      totalFees
+      totalFees,
+      totalTxCount
     }
   }
 
@@ -341,45 +338,6 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: 
             ))}
           </div>
         </div>
-
-        {/* Fee Tier Buttons */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Fee Tier (for fee calculations)
-          </label>
-          <div className="flex gap-2 flex-wrap">
-            {([
-              { tier: 0.01, encoded: 100, description: 'Stablecoin pairs' },
-              { tier: 0.05, encoded: 500, description: 'Low volatility pairs' },
-              { tier: 0.3, encoded: 3000, description: 'Most common pairs' },
-              { tier: 1, encoded: 10000, description: 'Exotic/low liquidity' }
-            ] as { tier: FeeTier; encoded: number; description: string }[]).map(({ tier, encoded, description }) => (
-              <button
-                key={tier}
-                onClick={() => setFeeTier(tier)}
-                title={`${tier}% fee tier (encoded as ${encoded})\n${description}`}
-                className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 relative group ${
-                  feeTier === tier
-                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg'
-                    : 'bg-white/5 text-gray-300 hover:bg-white/10'
-                }`}
-              >
-                <span>{tier}%</span>
-                {/* Tooltip */}
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block w-48 z-10">
-                  <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-xl border border-gray-700">
-                    <div className="font-bold text-pink-400 mb-1">{tier}% Fee Tier</div>
-                    <div className="text-gray-300 mb-1">Encoded: {encoded}</div>
-                    <div className="text-gray-400 text-[10px]">{description}</div>
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                      <div className="border-4 border-transparent border-t-gray-900"></div>
-                    </div>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
       
       <div className="overflow-x-auto">
@@ -393,7 +351,10 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: 
                 Volume USD
               </th>
               <th className="px-6 py-4 text-right text-xs font-semibold text-gray-300 uppercase tracking-wider">
-                Fees USD ({feeTier}%)
+                Fees USD
+              </th>
+              <th className="px-6 py-4 text-right text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                Tx Count
               </th>
               <th className="px-6 py-4 text-right text-xs font-semibold text-gray-300 uppercase tracking-wider">
                 Volume {pairInfo?.token0 || 'Token0'}
@@ -419,7 +380,10 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: 
                   {formatNumber(day.volumeUSD)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-green-400 text-right font-semibold">
-                  {formatNumber(calculateFees(day.volumeUSD))}
+                  {formatNumber(day.feesUSD)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-300 text-right font-medium">
+                  {parseInt(day.txCount || '0').toLocaleString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 text-right">
                   {formatTokenAmount(day.volumeToken0)}
@@ -444,6 +408,9 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: 
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-green-400 text-right font-bold">
                   {formatNumber(summaries.totalFees)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-300 text-right font-bold">
+                  {summaries.totalTxCount.toLocaleString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white text-right font-bold">
                   {formatTokenAmount(summaries.totalVolumeToken0.toString())}

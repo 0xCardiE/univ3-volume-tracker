@@ -29,6 +29,8 @@ const PAIR_DAY_DATA_QUERY = gql`
       volumeToken0
       volumeToken1
       tvlUSD
+      feesUSD
+      txCount
     }
   }
 `
@@ -39,6 +41,8 @@ interface PoolDayData {
   volumeToken0: string
   volumeToken1: string
   tvlUSD: string
+  feesUSD?: string
+  txCount?: string
 }
 
 interface PoolData {
@@ -97,6 +101,8 @@ export async function fetchPairDayData(pairAddress: string, days: number = 30, s
       volumeToken0: day.volumeToken0,
       volumeToken1: day.volumeToken1,
       tvlUSD: day.tvlUSD,
+      feesUSD: day.feesUSD || '0',
+      txCount: day.txCount || '0',
     }))
 
     return {
