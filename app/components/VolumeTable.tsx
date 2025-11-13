@@ -18,6 +18,8 @@ interface DayData {
   high: string
   low: string
   close: string
+  token0Price: string
+  token1Price: string
 }
 
 interface VolumeTableProps {
@@ -437,11 +439,18 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: 
         Showing {data.length} days of trading data
       </div>
 
-      {/* Price Chart */}
+      {/* USD Price Chart for Token0 (BZZ/Swarm) */}
       <div className="mt-8 bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8">
-        <h3 className="text-2xl font-bold text-white mb-6">Price Chart ({pairInfo?.token1}/{pairInfo?.token0})</h3>
+        <h3 className="text-2xl font-bold text-white mb-2">{pairInfo?.token0 || 'Token0'} Price Chart (USD)</h3>
+        <p className="text-gray-400 text-sm mb-6">Historical price of {pairInfo?.token0} in US Dollars (calculated from pool volume)</p>
         <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={[...data].reverse()}>
+          <LineChart data={[...data].reverse().map(day => ({
+            ...day,
+            // Calculate USD price: volumeUSD / volumeToken0 = USD per token
+            calculatedPrice: parseFloat(day.volumeUSD) > 0 && parseFloat(day.volumeToken0) > 0 
+              ? parseFloat(day.volumeUSD) / parseFloat(day.volumeToken0)
+              : 0
+          }))}>
             <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
             <XAxis 
               dataKey="date" 
@@ -455,6 +464,7 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: 
               stroke="#9CA3AF"
               tick={{ fill: '#9CA3AF' }}
               domain={['auto', 'auto']}
+              label={{ value: 'Price (USD)', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
             />
             <Tooltip 
               contentStyle={{
@@ -463,36 +473,18 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: 
                 borderRadius: '8px',
                 color: '#F3F4F6'
               }}
-              formatter={(value: number) => [value.toFixed(6), 'Price']}
+              formatter={(value: number) => [`$${value.toFixed(4)}`, 'Price']}
             />
             <Legend 
               wrapperStyle={{ color: '#9CA3AF' }}
             />
             <Line 
               type="monotone" 
-              dataKey={(item) => parseFloat(item.close)} 
+              dataKey="calculatedPrice"
               stroke="#EC4899" 
-              strokeWidth={2}
+              strokeWidth={3}
               dot={false}
-              name="Close Price"
-            />
-            <Line 
-              type="monotone" 
-              dataKey={(item) => parseFloat(item.high)} 
-              stroke="#10B981" 
-              strokeWidth={1}
-              dot={false}
-              strokeDasharray="5 5"
-              name="High"
-            />
-            <Line 
-              type="monotone" 
-              dataKey={(item) => parseFloat(item.low)} 
-              stroke="#EF4444" 
-              strokeWidth={1}
-              dot={false}
-              strokeDasharray="5 5"
-              name="Low"
+              name={`${pairInfo?.token0 || 'Token0'} Price (USD)`}
             />
           </LineChart>
         </ResponsiveContainer>

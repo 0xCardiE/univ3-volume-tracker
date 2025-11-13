@@ -35,6 +35,8 @@ const PAIR_DAY_DATA_QUERY = gql`
       high
       low
       close
+      token0Price
+      token1Price
     }
   }
 `
@@ -51,6 +53,8 @@ interface PoolDayData {
   high?: string
   low?: string
   close?: string
+  token0Price?: string
+  token1Price?: string
 }
 
 interface PoolData {
@@ -116,6 +120,8 @@ export async function fetchPairDayData(pairAddress: string, days: number = 30, s
       high: day.high || '0',
       low: day.low || '0',
       close: day.close || '0',
+      token0Price: day.token0Price || '0',
+      token1Price: day.token1Price || '0',
     }))
 
     return {
