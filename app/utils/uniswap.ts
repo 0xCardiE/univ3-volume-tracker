@@ -7,11 +7,16 @@ const PAIR_DAY_DATA_QUERY = gql`
       token0 {
         symbol
         name
+        decimals
       }
       token1 {
         symbol
         name
+        decimals
       }
+      totalValueLockedToken0
+      totalValueLockedToken1
+      totalValueLockedUSD
     }
     poolDayDatas(
       first: $first
@@ -42,11 +47,16 @@ interface PoolData {
     token0: {
       symbol: string
       name: string
+      decimals: string
     }
     token1: {
       symbol: string
       name: string
+      decimals: string
     }
+    totalValueLockedToken0: string
+    totalValueLockedToken1: string
+    totalValueLockedUSD: string
   } | null
   poolDayDatas: PoolDayData[]
 }
@@ -84,6 +94,11 @@ export async function fetchPairDayData(pairAddress: string, days: number = 30, s
       pairInfo: {
         token0: data.pool.token0.symbol,
         token1: data.pool.token1.symbol,
+        token0Name: data.pool.token0.name,
+        token1Name: data.pool.token1.name,
+        totalValueLockedToken0: data.pool.totalValueLockedToken0,
+        totalValueLockedToken1: data.pool.totalValueLockedToken1,
+        totalValueLockedUSD: data.pool.totalValueLockedUSD,
       },
     }
   } catch (error) {

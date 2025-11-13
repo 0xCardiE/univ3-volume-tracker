@@ -26,7 +26,15 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: 
   const [data, setData] = useState<DayData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [pairInfo, setPairInfo] = useState<{ token0: string; token1: string } | null>(null)
+  const [pairInfo, setPairInfo] = useState<{ 
+    token0: string
+    token1: string
+    token0Name?: string
+    token1Name?: string
+    totalValueLockedToken0?: string
+    totalValueLockedToken1?: string
+    totalValueLockedUSD?: string
+  } | null>(null)
   const [dayRange, setDayRange] = useState<DayRange>(60)
   const [feeTier, setFeeTier] = useState<FeeTier>(1)
   const [contractInfo, setContractInfo] = useState<PoolContractInfo | null>(null)
@@ -225,9 +233,56 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: 
                   <div className="text-gray-400 text-xs mb-1">Tick Spacing</div>
                   <div className="text-white font-mono">{contractInfo.tickSpacing}</div>
                 </div>
+                {data.length > 0 && pairInfo && (
+                  <>
+                    <div className="md:col-span-2 p-2 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded border border-green-500/30">
+                      <div className="text-gray-400 text-xs mb-1 flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Current Pool Liquidity (TVL)
+                      </div>
+                      <div className="text-white font-bold text-xl">
+                        {pairInfo.totalValueLockedUSD ? formatNumber(pairInfo.totalValueLockedUSD) : formatNumber(data[0].tvlUSD)}
+                      </div>
+                      <div className="text-gray-400 text-xs mt-1">Last updated: {data[0].date}</div>
+                    </div>
+                    {pairInfo.totalValueLockedToken0 && pairInfo.totalValueLockedToken1 && (
+                      <div className="md:col-span-2 p-3 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded border border-blue-500/30">
+                        <div className="text-gray-400 text-xs mb-2 flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                          Token Amounts in Pool
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="p-2 bg-black/20 rounded">
+                            <div className="text-xs text-gray-400 mb-1">{pairInfo.token0}</div>
+                            <div className="text-white font-bold text-lg">
+                              {formatTokenAmount(pairInfo.totalValueLockedToken0)}
+                            </div>
+                            {pairInfo.token0Name && (
+                              <div className="text-gray-500 text-xs mt-1">{pairInfo.token0Name}</div>
+                            )}
+                          </div>
+                          <div className="p-2 bg-black/20 rounded">
+                            <div className="text-xs text-gray-400 mb-1">{pairInfo.token1}</div>
+                            <div className="text-white font-bold text-lg">
+                              {formatTokenAmount(pairInfo.totalValueLockedToken1)}
+                            </div>
+                            {pairInfo.token1Name && (
+                              <div className="text-gray-500 text-xs mt-1">{pairInfo.token1Name}</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
                 <div className="md:col-span-2 p-2 bg-white/5 rounded">
-                  <div className="text-gray-400 text-xs mb-1">Current Liquidity</div>
-                  <div className="text-white font-mono text-lg">{BigInt(contractInfo.liquidity).toLocaleString()}</div>
+                  <div className="text-gray-400 text-xs mb-1">Liquidity (Raw Units)</div>
+                  <div className="text-white font-mono text-sm">{BigInt(contractInfo.liquidity).toLocaleString()}</div>
+                  <div className="text-gray-500 text-xs mt-1">sqrt(amount0 × amount1)</div>
                 </div>
                 <div className="md:col-span-2 p-2 bg-white/5 rounded">
                   <div className="text-gray-400 text-xs mb-1">Token0 Address</div>
