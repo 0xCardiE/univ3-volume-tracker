@@ -5,12 +5,16 @@ import { VolumeTable } from './components/VolumeTable'
 
 type PoolType = 'ethereum' | 'gnosis'
 
+const GRAPH_API_KEY = process.env.NEXT_PUBLIC_GRAPH_API_KEY || ''
+const UNISWAP_V3_SUBGRAPH_ID = process.env.NEXT_PUBLIC_UNISWAP_V3_SUBGRAPH_ID || '5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbataBQdd4'
+const GNOSIS_SUSHISWAP_V3_SUBGRAPH_ID = process.env.NEXT_PUBLIC_GNOSIS_SUSHISWAP_V3_SUBGRAPH_ID || 'GFvGfWBX47RNnvgwL6SjAAf2mrqrPxF91eA53F4eNegW'
+
 const POOLS = {
   ethereum: {
     address: '0x5696c2c2fcb7e304a5b9faaec9cd37d369c9d067',
     name: 'Ethereum',
     dex: 'Uniswap V3',
-    subgraphUrl: process.env.NEXT_PUBLIC_UNISWAP_V3_SUBGRAPH || '',
+    subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${UNISWAP_V3_SUBGRAPH_ID}`,
     chainId: '1',
     explorerUrl: 'https://etherscan.io',
   },
@@ -18,7 +22,7 @@ const POOLS = {
     address: '0x6f30b7cf40cb423c1d23478a9855701ecf43931e',
     name: 'Gnosis',
     dex: 'SushiSwap V3',
-    subgraphUrl: `https://gateway.thegraph.com/api/${process.env.NEXT_PUBLIC_UNISWAP_V3_SUBGRAPH?.split('/api/')[1]?.split('/')[0] || 'd86df69a0c7532b764e88bb49b5ee5c4'}/subgraphs/id/GFvGfWBX47RNnvgwL6SjAAf2mrqrPxF91eA53F4eNegW`,
+    subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${GNOSIS_SUSHISWAP_V3_SUBGRAPH_ID}`,
     chainId: '100',
     explorerUrl: 'https://gnosisscan.io',
   },

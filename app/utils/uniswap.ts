@@ -63,7 +63,17 @@ interface PoolData {
 
 export async function fetchPairDayData(pairAddress: string, days: number = 30, subgraphUrl: string) {
   try {
-    const client = new GraphQLClient(subgraphUrl)
+    // Extract API key from URL if present (format: /api/{key}/subgraphs/id/{id})
+    const apiKeyMatch = subgraphUrl.match(/\/api\/([^\/]+)\/subgraphs/)
+    const apiKey = apiKeyMatch ? apiKeyMatch[1] : ''
+    
+    // Create client with authorization header
+    const client = new GraphQLClient(subgraphUrl, {
+      headers: apiKey ? {
+        'Authorization': `Bearer ${apiKey}`
+      } : {}
+    })
+    
     const data = await client.request<PoolData>(PAIR_DAY_DATA_QUERY, {
       pairAddress: pairAddress.toLowerCase(),
       first: days,
