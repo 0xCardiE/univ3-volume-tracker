@@ -31,6 +31,10 @@ const PAIR_DAY_DATA_QUERY = gql`
       tvlUSD
       feesUSD
       txCount
+      open
+      high
+      low
+      close
     }
   }
 `
@@ -43,6 +47,10 @@ interface PoolDayData {
   tvlUSD: string
   feesUSD?: string
   txCount?: string
+  open?: string
+  high?: string
+  low?: string
+  close?: string
 }
 
 interface PoolData {
@@ -97,12 +105,17 @@ export async function fetchPairDayData(pairAddress: string, days: number = 30, s
         month: 'short',
         day: 'numeric',
       }),
+      dateTimestamp: day.date,
       volumeUSD: day.volumeUSD,
       volumeToken0: day.volumeToken0,
       volumeToken1: day.volumeToken1,
       tvlUSD: day.tvlUSD,
       feesUSD: day.feesUSD || '0',
       txCount: day.txCount || '0',
+      open: day.open || '0',
+      high: day.high || '0',
+      low: day.low || '0',
+      close: day.close || '0',
     }))
 
     return {

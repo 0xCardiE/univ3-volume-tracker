@@ -1,17 +1,23 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { fetchPairDayData } from '../utils/uniswap'
 import { fetchPoolContractInfo, type PoolContractInfo, setExplorerConfig } from '../utils/etherscan'
 
 interface DayData {
   date: string
+  dateTimestamp: number
   volumeUSD: string
   volumeToken0: string
   volumeToken1: string
   tvlUSD: string
   feesUSD: string
   txCount: string
+  open: string
+  high: string
+  low: string
+  close: string
 }
 
 interface VolumeTableProps {
@@ -429,6 +435,67 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: 
       
       <div className="bg-white/5 px-6 py-4 text-sm text-gray-400 text-center">
         Showing {data.length} days of trading data
+      </div>
+
+      {/* Price Chart */}
+      <div className="mt-8 bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8">
+        <h3 className="text-2xl font-bold text-white mb-6">Price Chart ({pairInfo?.token1}/{pairInfo?.token0})</h3>
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart data={[...data].reverse()}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+            <XAxis 
+              dataKey="date" 
+              stroke="#9CA3AF"
+              tick={{ fill: '#9CA3AF', fontSize: 12 }}
+              angle={-45}
+              textAnchor="end"
+              height={80}
+            />
+            <YAxis 
+              stroke="#9CA3AF"
+              tick={{ fill: '#9CA3AF' }}
+              domain={['auto', 'auto']}
+            />
+            <Tooltip 
+              contentStyle={{
+                backgroundColor: '#1F2937',
+                border: '1px solid #374151',
+                borderRadius: '8px',
+                color: '#F3F4F6'
+              }}
+              formatter={(value: number) => [value.toFixed(6), 'Price']}
+            />
+            <Legend 
+              wrapperStyle={{ color: '#9CA3AF' }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey={(item) => parseFloat(item.close)} 
+              stroke="#EC4899" 
+              strokeWidth={2}
+              dot={false}
+              name="Close Price"
+            />
+            <Line 
+              type="monotone" 
+              dataKey={(item) => parseFloat(item.high)} 
+              stroke="#10B981" 
+              strokeWidth={1}
+              dot={false}
+              strokeDasharray="5 5"
+              name="High"
+            />
+            <Line 
+              type="monotone" 
+              dataKey={(item) => parseFloat(item.low)} 
+              stroke="#EF4444" 
+              strokeWidth={1}
+              dot={false}
+              strokeDasharray="5 5"
+              name="Low"
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   )
