@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import { VolumeTable } from './components/VolumeTable'
 
-type NetworkType = 'ethereum' | 'gnosis' | 'base'
+type NetworkType = 'ethereum' | 'ethereum-v2' | 'gnosis' | 'base'
 
 const GRAPH_API_KEY = process.env.NEXT_PUBLIC_GRAPH_API_KEY || ''
 const UNISWAP_V3_SUBGRAPH_ID = process.env.NEXT_PUBLIC_UNISWAP_V3_SUBGRAPH_ID || '5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbataBQdd4'
+const UNISWAP_V2_SUBGRAPH_ID = process.env.NEXT_PUBLIC_UNISWAP_V2_SUBGRAPH_ID || 'A3Np3RQbaBA6oKJgiwDJeo5T3zrYfGHPWFYayMwtNDum'
 const GNOSIS_SUSHISWAP_V3_SUBGRAPH_ID = process.env.NEXT_PUBLIC_GNOSIS_SUSHISWAP_V3_SUBGRAPH_ID || 'GFvGfWBX47RNnvgwL6SjAAf2mrqrPxF91eA53F4eNegW'
 const BASE_UNISWAP_V3_SUBGRAPH_ID = process.env.NEXT_PUBLIC_BASE_UNISWAP_V3_SUBGRAPH_ID || '43Hwfi3dJSoGpyas9VwNoDAv55yjgGrPpNSmbQZArzMG'
 
@@ -15,6 +16,13 @@ const NETWORKS = {
     name: 'Ethereum',
     dex: 'Uniswap V3',
     subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${UNISWAP_V3_SUBGRAPH_ID}`,
+    chainId: '1',
+    explorerUrl: 'https://etherscan.io',
+  },
+  'ethereum-v2': {
+    name: 'Ethereum',
+    dex: 'Uniswap V2',
+    subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${UNISWAP_V2_SUBGRAPH_ID}`,
     chainId: '1',
     explorerUrl: 'https://etherscan.io',
   },
@@ -61,7 +69,7 @@ export default function Home() {
             Universal Uniswap Volume Tracker
           </h1>
           <p className="text-gray-300 text-lg">
-            Track daily trading volumes for any Uniswap V3 pair across multiple chains
+            Track daily trading volumes for any Uniswap pair (V2 & V3) across multiple chains
           </p>
         </div>
 
@@ -82,6 +90,20 @@ export default function Home() {
                 <div className="flex flex-col items-center gap-2">
                   <span className="text-lg">{NETWORKS.ethereum.name}</span>
                   <span className="text-xs opacity-75">{NETWORKS.ethereum.dex}</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setSelectedNetwork('ethereum-v2')}
+                className={`px-8 py-4 rounded-lg font-semibold transition-all duration-200 ${
+                  selectedNetwork === 'ethereum-v2'
+                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg scale-105'
+                    : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                }`}
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-lg">{NETWORKS['ethereum-v2'].name}</span>
+                  <span className="text-xs opacity-75">{NETWORKS['ethereum-v2'].dex}</span>
                 </div>
               </button>
 
@@ -137,7 +159,7 @@ export default function Home() {
               </button>
             </div>
             <p className="text-gray-400 text-sm mt-2">
-              Enter a Uniswap V3 pair contract address to view its trading volume history
+              Enter a Uniswap pair contract address to view its trading volume history
             </p>
           </div>
         </div>
