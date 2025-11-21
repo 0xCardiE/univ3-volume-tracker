@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { VolumeTable } from './components/VolumeTable'
+import { TrendingPools } from './components/TrendingPools'
 
 type NetworkType = 'ethereum' | 'ethereum-v2' | 'gnosis' | 'base'
 
 const DEFAULT_GRAPH_API_KEY = process.env.NEXT_PUBLIC_GRAPH_API_KEY || ''
+const DEFAULT_COINGECKO_API_KEY = process.env.NEXT_PUBLIC_COINGECKO_API_KEY || 'CG-QzWyBgDe8Hc9vWg7s5gvejRj'
 const UNISWAP_V3_SUBGRAPH_ID = process.env.NEXT_PUBLIC_UNISWAP_V3_SUBGRAPH_ID || '5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbataBQdd4'
 const UNISWAP_V2_SUBGRAPH_ID = process.env.NEXT_PUBLIC_UNISWAP_V2_SUBGRAPH_ID || 'A3Np3RQbaBA6oKJgiwDJeo5T3zrYfGHPWFYayMwtNDum'
 const GNOSIS_SUSHISWAP_V3_SUBGRAPH_ID = process.env.NEXT_PUBLIC_GNOSIS_SUSHISWAP_V3_SUBGRAPH_ID || 'GFvGfWBX47RNnvgwL6SjAAf2mrqrPxF91eA53F4eNegW'
@@ -17,27 +19,60 @@ export default function Home() {
   const [searchedAddress, setSearchedAddress] = useState('')
   const [showConfigModal, setShowConfigModal] = useState(false)
   const [apiKey, setApiKey] = useState('')
+  const [coingeckoApiKey, setCoingeckoApiKey] = useState('')
   const [tempApiKey, setTempApiKey] = useState('')
+  const [tempCoingeckoApiKey, setTempCoingeckoApiKey] = useState('')
   
-  // Load API key from localStorage on mount
+  // Load API keys from localStorage on mount
   useEffect(() => {
-    const savedKey = localStorage.getItem('graph_api_key')
-    if (savedKey) {
-      setApiKey(savedKey)
+    const savedGraphKey = localStorage.getItem('graph_api_key')
+    const savedCoingeckoKey = localStorage.getItem('coingecko_api_key')
+    
+    if (savedGraphKey) {
+      setApiKey(savedGraphKey)
     } else {
       setApiKey(DEFAULT_GRAPH_API_KEY)
+    }
+    
+    if (savedCoingeckoKey) {
+      setCoingeckoApiKey(savedCoingeckoKey)
+    } else {
+      setCoingeckoApiKey(DEFAULT_COINGECKO_API_KEY)
     }
   }, [])
 
   const handleSaveApiKey = () => {
     localStorage.setItem('graph_api_key', tempApiKey)
+    localStorage.setItem('coingecko_api_key', tempCoingeckoApiKey)
     setApiKey(tempApiKey)
+    setCoingeckoApiKey(tempCoingeckoApiKey)
     setShowConfigModal(false)
   }
 
   const handleOpenConfig = () => {
     setTempApiKey(apiKey)
+    setTempCoingeckoApiKey(coingeckoApiKey)
     setShowConfigModal(true)
+  }
+
+  const handleSelectPool = (address: string, network: string) => {
+    // Map network to our network type
+    const networkMap: Record<string, NetworkType> = {
+      'eth': 'ethereum',
+      'base': 'base',
+    }
+    
+    if (networkMap[network]) {
+      setSelectedNetwork(networkMap[network])
+    }
+    
+    setPairAddress(address)
+    setSearchedAddress(address.toLowerCase())
+    
+    // Scroll to the search section
+    setTimeout(() => {
+      document.getElementById('search-section')?.scrollIntoView({ behavior: 'smooth' })
+    }, 100)
   }
 
   const GRAPH_API_KEY = apiKey || DEFAULT_GRAPH_API_KEY
@@ -125,7 +160,7 @@ export default function Home() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    The Graph API Configuration
+                    API Configuration
                   </h2>
                   <button
                     onClick={() => setShowConfigModal(false)}
@@ -139,7 +174,7 @@ export default function Home() {
               </div>
 
               <div className="p-6 space-y-6">
-                {/* API Key Input */}
+                {/* The Graph API Key Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     The Graph API Key
@@ -148,44 +183,94 @@ export default function Home() {
                     type="text"
                     value={tempApiKey}
                     onChange={(e) => setTempApiKey(e.target.value)}
-                    placeholder="Enter your API key..."
+                    placeholder="Enter your The Graph API key..."
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent font-mono text-sm"
                   />
                   <p className="text-gray-400 text-sm mt-2">
-                    Your API key is stored locally in your browser and never sent to any server except The Graph.
+                    Used for querying Uniswap subgraph data
                   </p>
                 </div>
 
+                {/* CoinGecko API Key Input */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    CoinGecko API Key
+                  </label>
+                  <input
+                    type="text"
+                    value={tempCoingeckoApiKey}
+                    onChange={(e) => setTempCoingeckoApiKey(e.target.value)}
+                    placeholder="Enter your CoinGecko API key..."
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm"
+                  />
+                  <p className="text-gray-400 text-sm mt-2">
+                    Used for trending pools data
+                  </p>
+                </div>
+
+                <p className="text-gray-400 text-xs bg-white/5 border border-white/10 rounded-lg p-3">
+                  🔒 Your API keys are stored locally in your browser and never sent to any server except their respective APIs (The Graph and CoinGecko).
+                </p>
+
                 {/* Instructions */}
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-blue-400 mb-3 flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    How to get your API Key
-                  </h3>
-                  <ol className="space-y-2 text-gray-300 text-sm">
-                    <li className="flex gap-2">
-                      <span className="font-bold text-pink-400">1.</span>
-                      <span>Visit <a href="https://thegraph.com/studio/apikeys/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">thegraph.com/studio/apikeys/</a></span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="font-bold text-pink-400">2.</span>
-                      <span>Create an account or sign in with your wallet</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="font-bold text-pink-400">3.</span>
-                      <span>Click "Create API Key" button</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="font-bold text-pink-400">4.</span>
-                      <span>Give it a name (e.g., "Volume Tracker")</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="font-bold text-pink-400">5.</span>
-                      <span>Copy the API key and paste it above</span>
-                    </li>
-                  </ol>
+                <div className="space-y-4">
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-blue-400 mb-3 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      How to get The Graph API Key
+                    </h3>
+                    <ol className="space-y-2 text-gray-300 text-sm">
+                      <li className="flex gap-2">
+                        <span className="font-bold text-pink-400">1.</span>
+                        <span>Visit <a href="https://thegraph.com/studio/apikeys/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">thegraph.com/studio/apikeys/</a></span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-pink-400">2.</span>
+                        <span>Create an account or sign in with your wallet</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-pink-400">3.</span>
+                        <span>Click "Create API Key" button</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-pink-400">4.</span>
+                        <span>Give it a name (e.g., "Volume Tracker")</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-pink-400">5.</span>
+                        <span>Copy the API key and paste it above</span>
+                      </li>
+                    </ol>
+                  </div>
+
+                  <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-purple-400 mb-3 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      How to get CoinGecko API Key
+                    </h3>
+                    <ol className="space-y-2 text-gray-300 text-sm">
+                      <li className="flex gap-2">
+                        <span className="font-bold text-purple-400">1.</span>
+                        <span>Visit <a href="https://www.coingecko.com/en/api/pricing" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline">coingecko.com/en/api/pricing</a></span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-purple-400">2.</span>
+                        <span>Sign up for a free or paid plan</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-purple-400">3.</span>
+                        <span>Navigate to your dashboard and copy your API key</span>
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="font-bold text-purple-400">4.</span>
+                        <span>Paste it in the CoinGecko API Key field above</span>
+                      </li>
+                    </ol>
+                  </div>
                 </div>
 
                 {/* Visual Guide */}
@@ -220,7 +305,7 @@ export default function Home() {
                     onClick={handleSaveApiKey}
                     className="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 rounded-lg text-white font-medium shadow-lg transition-all duration-200"
                   >
-                    Save API Key
+                    Save API Keys
                   </button>
                 </div>
               </div>
@@ -228,7 +313,13 @@ export default function Home() {
           </div>
         )}
 
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 mb-8">
+        {/* Trending Pools */}
+        <div className="mb-8">
+          <TrendingPools apiKey={coingeckoApiKey} onSelectPool={handleSelectPool} />
+        </div>
+
+        {/* Search Section */}
+        <div id="search-section" className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 mb-8">
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-300 mb-3">
               Select Network
@@ -327,18 +418,6 @@ export default function Home() {
             chainId={currentNetwork.chainId}
             explorerUrl={currentNetwork.explorerUrl}
           />
-        )}
-
-        {!searchedAddress && (
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-12">
-            <div className="text-center">
-              <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <h3 className="text-xl font-semibold text-gray-300 mb-2">No Pair Selected</h3>
-              <p className="text-gray-400">Enter a pair contract address above to view trading data</p>
-            </div>
-          </div>
         )}
       </div>
     </main>
