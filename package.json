@@ -1,7 +1,7 @@
 {
   "name": "token-volumes",
   "version": "0.1.0",
-  "description": "A dApp for tracking Swarm (BZZ) token trading volumes on Ethereum and Gnosis networks",
+  "description": "Universal Uniswap volume tracker for monitoring any token pair across Ethereum, Gnosis, and Base networks",
   "private": true,
   "scripts": {
     "dev": "next dev",

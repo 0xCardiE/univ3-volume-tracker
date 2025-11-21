@@ -1,15 +1,16 @@
-# Swarm Token Volumes Tracker
+# Universal Uniswap Volume Tracker
 
-A Next.js application that tracks and displays daily trading volumes for the Swarm (BZZ) token on Ethereum and Gnosis networks. This dApp specifically monitors Swarm token trading activity across Uniswap V3 pairs on both networks.
+A Next.js application that tracks and displays daily trading volumes for any Uniswap V3 pair across multiple blockchain networks. This universal dApp allows you to monitor any token pair's trading activity on Ethereum, Gnosis, and Base networks.
 
 ## Features
 
-- 📊 View daily trading volumes for Swarm (BZZ) token pairs
+- 📊 View daily trading volumes for any Uniswap V3 pair
+- 🌐 Multi-chain support: Ethereum, Gnosis (SushiSwap V3), and Base
 - 💰 Display volume in USD, Token0, and Token1
 - 📈 Shows TVL (Total Value Locked) data
-- 🔍 Track Swarm token on both Ethereum and Gnosis networks
+- 🔍 Search any pair by contract address
 - 🎨 Modern, responsive UI with Tailwind CSS
-- ⚡ Real-time data from Uniswap V3 subgraphs
+- ⚡ Real-time data from The Graph subgraphs
 
 ## Getting Started
 
@@ -40,15 +41,21 @@ npm start
 
 ## Usage
 
-This application is specifically designed to track the Swarm (BZZ) token trading volumes on Ethereum and Gnosis networks.
+1. Select your preferred network (Ethereum, Gnosis, or Base)
+2. Enter any Uniswap V3 pair contract address
+3. Click "Search" to fetch and display trading data
+4. View detailed trading volumes, fees, TVL, and transaction counts
+5. Analyze historical price charts and metrics
 
-1. The app loads with the default Swarm token pair address
-2. View the last 30 days of trading data for Swarm token
-3. Monitor trading activity across both Ethereum and Gnosis networks
+## Supported Networks
+
+- **Ethereum** - Uniswap V3 pairs on Ethereum mainnet
+- **Gnosis** - SushiSwap V3 pairs on Gnosis Chain
+- **Base** - Uniswap V3 pairs on Base network
 
 ## Data Source
 
-This app uses [The Graph](https://thegraph.com/) to query the Uniswap V3 subgraphs on both Ethereum mainnet and Gnosis network, specifically tracking Swarm (BZZ) token pairs.
+This app uses [The Graph](https://thegraph.com/) to query Uniswap V3 subgraphs across multiple networks, providing real-time and historical trading data for any pair.
 
 ## Technologies
 
