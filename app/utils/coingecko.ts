@@ -149,10 +149,12 @@ async function fetchWithMegafilter(apiKey: string): Promise<TrendingPool[]> {
 
 /**
  * Fetch trending pools with pagination to find enough supported pools
+ * Since trending_pools doesn't support network filtering, we fetch multiple pages
+ * and filter client-side to find pools from our supported networks
  */
 async function fetchTrendingWithPagination(apiKey: string): Promise<TrendingPool[]> {
-  const maxPages = 5 // Fetch up to 5 pages
-  const minSupportedPools = 12 // Try to get at least 12 supported pools
+  const maxPages = 15 // Fetch up to 15 pages (~450 pools) to find supported ones
+  const minSupportedPools = 20 // Target: at least 20 pools from our networks
   const allSupportedPools: TrendingPool[] = []
   
   for (let page = 1; page <= maxPages; page++) {
@@ -196,7 +198,7 @@ async function fetchTrendingWithPagination(apiKey: string): Promise<TrendingPool
     }
     
     // Small delay to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 200))
+    await new Promise(resolve => setTimeout(resolve, 100))
   }
   
   console.log(`Final result: ${allSupportedPools.length} supported pools from ${COINGECKO_NETWORKS.join(', ')}`)
