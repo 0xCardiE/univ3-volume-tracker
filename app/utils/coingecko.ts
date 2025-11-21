@@ -27,12 +27,41 @@ const COINGECKO_INCLUDE = ['base_token', 'quote_token', 'dex', 'network']
 //                  'h24_price_change_percentage_desc', 'reserve_in_usd_desc', etc.
 const COINGECKO_SORT = 'h24_volume_usd_desc'
 
+/**
+ * Supported network and DEX combinations
+ * This should match the subgraphs we have configured in the app (page.tsx)
+ * 
+ * HOW TO ADD NEW SUPPORT:
+ * 1. Add subgraph configuration in page.tsx NETWORKS object
+ * 2. Add the network+dex combination here
+ * 3. Trending pools will automatically filter to show only supported pools
+ * 
+ * Network IDs from CoinGecko: eth, base, gno, bsc, polygon, arbitrum, optimism, avalanche, etc.
+ * DEX IDs from CoinGecko: uniswap_v3, uniswap_v2, sushiswap_v3, pancakeswap_v2, etc.
+ */
+const SUPPORTED_POOLS = [
+  { network: 'eth', dex: 'uniswap_v3' },
+  { network: 'eth', dex: 'uniswap_v2' },
+  { network: 'base', dex: 'uniswap_v3' },
+  { network: 'gno', dex: 'sushiswap_v3' },
+]
+
+/**
+ * Check if a pool is supported based on network and DEX
+ */
+function isSupportedPool(network: string, dexId: string): boolean {
+  return SUPPORTED_POOLS.some(
+    (supported) => supported.network === network && supported.dex === dexId
+  )
+}
+
 export interface TrendingPool {
   id: string
   address: string
   name: string
   network: string
   dex: string
+  dexId?: string // Optional: original DEX ID for filtering
   baseToken: {
     address: string
     name: string
@@ -64,30 +93,76 @@ export async function fetchTrendingPools(apiKey: string): Promise<TrendingPool[]
       throw new Error('CoinGecko API key is required')
     }
 
-    // Build query parameters
-    const params = new URLSearchParams()
-    params.append('include', COINGECKO_INCLUDE.join(','))
-    
     // Try the trending pools endpoint first as fallback
     // The megafilter endpoint might require a higher tier API plan
     const useMegafilter = false // Set to true if you have access to megafilter endpoint
     
-    let url: string
-    
     if (useMegafilter) {
-      // Megafilter endpoint (may require Pro+ plan)
-      // https://docs.coingecko.com/reference/pools-megafilter
-      params.append('page', '1')
-      params.append('networks', COINGECKO_NETWORKS.join(','))
-      params.append('checks', COINGECKO_CHECKS.join(','))
-      params.append('sort', COINGECKO_SORT)
-      url = `https://pro-api.coingecko.com/api/v3/onchain/pools/megafilter?${params.toString()}`
+      // Use megafilter endpoint with network filtering
+      return await fetchWithMegafilter(apiKey)
     } else {
-      // Trending pools endpoint (available on standard Pro plans)
-      url = `https://pro-api.coingecko.com/api/v3/onchain/networks/trending_pools?${params.toString()}`
+      // Use trending pools and fetch multiple pages to find supported pools
+      return await fetchTrendingWithPagination(apiKey)
     }
+  } catch (error) {
+    console.error('Failed to fetch trending pools:', error)
+    throw error
+  }
+}
+
+/**
+ * Fetch pools using megafilter endpoint (requires Pro+ plan)
+ */
+async function fetchWithMegafilter(apiKey: string): Promise<TrendingPool[]> {
+  const params = new URLSearchParams()
+  params.append('include', COINGECKO_INCLUDE.join(','))
+  params.append('page', '1')
+  params.append('networks', COINGECKO_NETWORKS.join(','))
+  params.append('checks', COINGECKO_CHECKS.join(','))
+  params.append('sort', COINGECKO_SORT)
+  
+  const url = `https://pro-api.coingecko.com/api/v3/onchain/pools/megafilter?${params.toString()}`
+  console.log('Fetching pools from megafilter:', url)
+  
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'x-cg-pro-api-key': apiKey,
+      'Accept': 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    console.error('CoinGecko API error:', {
+      status: response.status,
+      statusText: response.statusText,
+      body: errorText,
+      url: url
+    })
+    throw new Error(`CoinGecko API error: ${response.status} - ${response.statusText}`)
+  }
+
+  const json = await response.json()
+  return parsePools(json, false) // No need to filter, megafilter already filtered
+}
+
+/**
+ * Fetch trending pools with pagination to find enough supported pools
+ */
+async function fetchTrendingWithPagination(apiKey: string): Promise<TrendingPool[]> {
+  const maxPages = 5 // Fetch up to 5 pages
+  const minSupportedPools = 12 // Try to get at least 12 supported pools
+  const allSupportedPools: TrendingPool[] = []
+  
+  for (let page = 1; page <= maxPages; page++) {
+    console.log(`Fetching trending pools page ${page}...`)
     
-    console.log('Fetching pools from:', url)
+    const params = new URLSearchParams()
+    params.append('include', COINGECKO_INCLUDE.join(','))
+    params.append('page', page.toString())
+    
+    const url = `https://pro-api.coingecko.com/api/v3/onchain/networks/trending_pools?${params.toString()}`
     
     const response = await fetch(url, {
       method: 'GET',
@@ -109,70 +184,97 @@ export async function fetchTrendingPools(apiKey: string): Promise<TrendingPool[]
     }
 
     const json = await response.json()
+    const pagePools = parsePools(json, true) // Filter to supported pools
     
-    // Create maps for all included data for easy lookup
-    const tokensMap = new Map()
-    const dexesMap = new Map()
-    const networksMap = new Map()
+    allSupportedPools.push(...pagePools)
     
-    if (json.included) {
-      json.included.forEach((item: any) => {
-        if (item.type === 'token') {
-          tokensMap.set(item.id, item.attributes)
-        } else if (item.type === 'dex') {
-          dexesMap.set(item.id, item.attributes)
-        } else if (item.type === 'network') {
-          networksMap.set(item.id, item.attributes)
-        }
-      })
+    console.log(`Page ${page}: Found ${pagePools.length} supported pools (total: ${allSupportedPools.length})`)
+    
+    // If we have enough supported pools or no more data, stop
+    if (allSupportedPools.length >= minSupportedPools || !json.data || json.data.length === 0) {
+      break
     }
+    
+    // Small delay to avoid rate limiting
+    await new Promise(resolve => setTimeout(resolve, 200))
+  }
+  
+  console.log(`Final result: ${allSupportedPools.length} supported pools from ${COINGECKO_NETWORKS.join(', ')}`)
+  return allSupportedPools
+}
 
-    const pools: TrendingPool[] = json.data.map((pool: any) => {
-      const attrs = pool.attributes
-      const baseTokenId = pool.relationships?.base_token?.data?.id
-      const quoteTokenId = pool.relationships?.quote_token?.data?.id
-      const dexId = pool.relationships?.dex?.data?.id
-      const networkId = pool.relationships?.network?.data?.id
-
-      const baseTokenData = tokensMap.get(baseTokenId) || {}
-      const quoteTokenData = tokensMap.get(quoteTokenId) || {}
-      const dexData = dexesMap.get(dexId) || {}
-      const networkData = networksMap.get(networkId) || {}
-
-      // Extract network from pool id (e.g., "eth_0x..." -> "eth")
-      const network = pool.id.split('_')[0]
-
-      return {
-        id: pool.id,
-        address: attrs.address,
-        name: attrs.name,
-        network: network,
-        dex: dexData.name || dexId || 'unknown',
-        baseToken: {
-          address: baseTokenData.address || '',
-          name: baseTokenData.name || 'Unknown',
-          symbol: baseTokenData.symbol || '???',
-          imageUrl: baseTokenData.image_url || '',
-        },
-        quoteToken: {
-          address: quoteTokenData.address || '',
-          name: quoteTokenData.name || 'Unknown',
-          symbol: quoteTokenData.symbol || '???',
-          imageUrl: quoteTokenData.image_url || '',
-        },
-        baseTokenPriceUsd: attrs.base_token_price_usd,
-        quoteTokenPriceUsd: attrs.quote_token_price_usd,
-        volumeUsd24h: attrs.volume_usd?.h24 || '0',
-        priceChangePercentage24h: attrs.price_change_percentage?.h24 || '0',
-        reserveInUsd: attrs.reserve_in_usd || '0',
-        transactions24h: attrs.transactions?.h24 || { buys: 0, sells: 0, buyers: 0, sellers: 0 },
+/**
+ * Parse pools from API response
+ */
+function parsePools(json: any, filterSupported: boolean): TrendingPool[] {
+  // Create maps for all included data for easy lookup
+  const tokensMap = new Map()
+  const dexesMap = new Map()
+  const networksMap = new Map()
+  
+  if (json.included) {
+    json.included.forEach((item: any) => {
+      if (item.type === 'token') {
+        tokensMap.set(item.id, item.attributes)
+      } else if (item.type === 'dex') {
+        dexesMap.set(item.id, item.attributes)
+      } else if (item.type === 'network') {
+        networksMap.set(item.id, item.attributes)
       }
     })
-
-    return pools
-  } catch (error) {
-    console.error('Failed to fetch trending pools:', error)
-    throw error
   }
+
+  const allPools: TrendingPool[] = json.data.map((pool: any) => {
+    const attrs = pool.attributes
+    const baseTokenId = pool.relationships?.base_token?.data?.id
+    const quoteTokenId = pool.relationships?.quote_token?.data?.id
+    const dexId = pool.relationships?.dex?.data?.id
+    const networkId = pool.relationships?.network?.data?.id
+
+    const baseTokenData = tokensMap.get(baseTokenId) || {}
+    const quoteTokenData = tokensMap.get(quoteTokenId) || {}
+    const dexData = dexesMap.get(dexId) || {}
+    const networkData = networksMap.get(networkId) || {}
+
+    // Extract network from pool id (e.g., "eth_0x..." -> "eth")
+    const network = pool.id.split('_')[0]
+
+    return {
+      id: pool.id,
+      address: attrs.address,
+      name: attrs.name,
+      network: network,
+      dex: dexData.name || dexId || 'unknown',
+      dexId: dexId, // Keep original dex ID for filtering
+      baseToken: {
+        address: baseTokenData.address || '',
+        name: baseTokenData.name || 'Unknown',
+        symbol: baseTokenData.symbol || '???',
+        imageUrl: baseTokenData.image_url || '',
+      },
+      quoteToken: {
+        address: quoteTokenData.address || '',
+        name: quoteTokenData.name || 'Unknown',
+        symbol: quoteTokenData.symbol || '???',
+        imageUrl: quoteTokenData.image_url || '',
+      },
+      baseTokenPriceUsd: attrs.base_token_price_usd,
+      quoteTokenPriceUsd: attrs.quote_token_price_usd,
+      volumeUsd24h: attrs.volume_usd?.h24 || '0',
+      priceChangePercentage24h: attrs.price_change_percentage?.h24 || '0',
+      reserveInUsd: attrs.reserve_in_usd || '0',
+      transactions24h: attrs.transactions?.h24 || { buys: 0, sells: 0, buyers: 0, sellers: 0 },
+    }
+  })
+
+  // Filter pools to only include supported network+DEX combinations if requested
+  if (filterSupported) {
+    const supportedPools = allPools.filter((pool: any) => {
+      return isSupportedPool(pool.network, pool.dexId)
+    })
+    return supportedPools
+  }
+  
+  return allPools
 }
 
