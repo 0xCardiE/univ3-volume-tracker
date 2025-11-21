@@ -54,11 +54,12 @@ export function TrendingPools({ apiKey, onSelectPool }: TrendingPoolsProps) {
   const getNetworkName = (network: string) => {
     const networkMap: Record<string, string> = {
       'eth': 'Ethereum',
+      'base': 'Base',
+      'gno': 'Gnosis',
       'bsc': 'BSC',
       'polygon': 'Polygon',
       'arbitrum': 'Arbitrum',
       'optimism': 'Optimism',
-      'base': 'Base',
       'avalanche': 'Avalanche',
     }
     return networkMap[network] || network.toUpperCase()

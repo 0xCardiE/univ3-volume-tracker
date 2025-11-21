@@ -56,10 +56,11 @@ export default function Home() {
   }
 
   const handleSelectPool = (address: string, network: string) => {
-    // Map network to our network type
+    // Map CoinGecko network IDs to our network types
     const networkMap: Record<string, NetworkType> = {
       'eth': 'ethereum',
       'base': 'base',
+      'gno': 'gnosis',
     }
     
     if (networkMap[network]) {
