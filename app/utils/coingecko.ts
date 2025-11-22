@@ -37,13 +37,23 @@ const COINGECKO_SORT = 'h24_volume_usd_desc'
  * 3. Trending pools will automatically filter to show only supported pools
  * 
  * Network IDs from CoinGecko: eth, base, gno, bsc, polygon, arbitrum, optimism, avalanche, etc.
- * DEX IDs from CoinGecko: uniswap_v3, uniswap_v2, sushiswap_v3, pancakeswap_v2, etc.
+ * DEX IDs from CoinGecko: uniswap_v3, uniswap_v2, uniswap_v4, sushiswap_v3, pancakeswap_v2, etc.
  */
 const SUPPORTED_POOLS = [
+  // Ethereum
   { network: 'eth', dex: 'uniswap_v3' },
   { network: 'eth', dex: 'uniswap_v2' },
+  { network: 'eth', dex: 'uniswap_v4' },
+  // Base
   { network: 'base', dex: 'uniswap_v3' },
+  { network: 'base', dex: 'uniswap_v2' },
+  { network: 'base', dex: 'uniswap_v4' },
+  // Other networks
   { network: 'gno', dex: 'sushiswap_v3' },
+  { network: 'arbitrum', dex: 'uniswap_v3' },
+  { network: 'bsc', dex: 'uniswap_v3' },
+  { network: 'polygon', dex: 'uniswap_v3' },
+  { network: 'optimism', dex: 'uniswap_v3' },
 ]
 
 /**

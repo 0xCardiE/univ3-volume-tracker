@@ -4,14 +4,27 @@ import { useState, useEffect } from 'react'
 import { VolumeTable } from './components/VolumeTable'
 import { TrendingPools } from './components/TrendingPools'
 
-type NetworkType = 'ethereum' | 'ethereum-v2' | 'gnosis' | 'base'
+type NetworkType = 'ethereum' | 'ethereum-v2' | 'ethereum-v4' | 'gnosis' | 'base' | 'base-v2' | 'base-v4' | 'arbitrum' | 'bnb' | 'polygon' | 'optimism'
 
 const DEFAULT_GRAPH_API_KEY = process.env.NEXT_PUBLIC_GRAPH_API_KEY || ''
 const DEFAULT_COINGECKO_API_KEY = process.env.NEXT_PUBLIC_COINGECKO_API_KEY || 'CG-QzWyBgDe8Hc9vWg7s5gvejRj'
-const UNISWAP_V3_SUBGRAPH_ID = process.env.NEXT_PUBLIC_UNISWAP_V3_SUBGRAPH_ID || '5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbataBQdd4'
-const UNISWAP_V2_SUBGRAPH_ID = process.env.NEXT_PUBLIC_UNISWAP_V2_SUBGRAPH_ID || 'A3Np3RQbaBA6oKJgiwDJeo5T3zrYfGHPWFYayMwtNDum'
-const GNOSIS_SUSHISWAP_V3_SUBGRAPH_ID = process.env.NEXT_PUBLIC_GNOSIS_SUSHISWAP_V3_SUBGRAPH_ID || 'GFvGfWBX47RNnvgwL6SjAAf2mrqrPxF91eA53F4eNegW'
+
+// Ethereum subgraphs
+const ETHEREUM_UNISWAP_V3_SUBGRAPH_ID = process.env.NEXT_PUBLIC_UNISWAP_V3_SUBGRAPH_ID || '5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbataBQdd4'
+const ETHEREUM_UNISWAP_V2_SUBGRAPH_ID = process.env.NEXT_PUBLIC_UNISWAP_V2_SUBGRAPH_ID || 'A3Np3RQbaBA6oKJgiwDJeo5T3zrYfGHPWFYayMwtNDum'
+const ETHEREUM_UNISWAP_V4_SUBGRAPH_ID = 'DiYPVdygkfjDWhbxGSqAQxwBKmfKnkWQojqeM2rkLb3G'
+
+// Base subgraphs
 const BASE_UNISWAP_V3_SUBGRAPH_ID = process.env.NEXT_PUBLIC_BASE_UNISWAP_V3_SUBGRAPH_ID || '43Hwfi3dJSoGpyas9VwNoDAv55yjgGrPpNSmbQZArzMG'
+const BASE_UNISWAP_V2_SUBGRAPH_ID = '4jGhpKjW4prWoyt5Bwk1ZHUwdEmNWveJcjEyjoTZWCY9'
+const BASE_UNISWAP_V4_SUBGRAPH_ID = 'Gqm2b5J85n1bhCyDMpGbtbVn4935EvvdyHdHrx3dibyj'
+
+// Other networks
+const GNOSIS_SUSHISWAP_V3_SUBGRAPH_ID = process.env.NEXT_PUBLIC_GNOSIS_SUSHISWAP_V3_SUBGRAPH_ID || 'GFvGfWBX47RNnvgwL6SjAAf2mrqrPxF91eA53F4eNegW'
+const ARBITRUM_UNISWAP_V3_SUBGRAPH_ID = '3V7ZY6muhxaQL5qvntX1CFXJ32W7BxXZTGTwmpH5J4t3'
+const BNB_UNISWAP_V3_SUBGRAPH_ID = 'G5MUbSBM7Nsrm9tH2tGQUiAF4SZDGf2qeo1xPLYjKr7K'
+const POLYGON_UNISWAP_V3_SUBGRAPH_ID = 'HMcqgvDY6f4MpnRSJqUUsBPHePj8Hq3AxiDBfDUrWs15'
+const OPTIMISM_UNISWAP_V3_SUBGRAPH_ID = 'AUpZ47RTWDBpco7YTTffGyRkBJ2i26Ms8dQSkUdxPHGc'
 
 export default function Home() {
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkType>('ethereum')
@@ -61,6 +74,10 @@ export default function Home() {
       'eth': 'ethereum',
       'base': 'base',
       'gno': 'gnosis',
+      'arbitrum': 'arbitrum',
+      'bsc': 'bnb',
+      'polygon': 'polygon',
+      'optimism': 'optimism',
     }
     
     if (networkMap[network]) {
@@ -82,16 +99,44 @@ export default function Home() {
     ethereum: {
       name: 'Ethereum',
       dex: 'Uniswap V3',
-      subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${UNISWAP_V3_SUBGRAPH_ID}`,
+      subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${ETHEREUM_UNISWAP_V3_SUBGRAPH_ID}`,
       chainId: '1',
       explorerUrl: 'https://etherscan.io',
     },
     'ethereum-v2': {
       name: 'Ethereum',
       dex: 'Uniswap V2',
-      subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${UNISWAP_V2_SUBGRAPH_ID}`,
+      subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${ETHEREUM_UNISWAP_V2_SUBGRAPH_ID}`,
       chainId: '1',
       explorerUrl: 'https://etherscan.io',
+    },
+    'ethereum-v4': {
+      name: 'Ethereum',
+      dex: 'Uniswap V4',
+      subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${ETHEREUM_UNISWAP_V4_SUBGRAPH_ID}`,
+      chainId: '1',
+      explorerUrl: 'https://etherscan.io',
+    },
+    base: {
+      name: 'Base',
+      dex: 'Uniswap V3',
+      subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${BASE_UNISWAP_V3_SUBGRAPH_ID}`,
+      chainId: '8453',
+      explorerUrl: 'https://basescan.org',
+    },
+    'base-v2': {
+      name: 'Base',
+      dex: 'Uniswap V2',
+      subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${BASE_UNISWAP_V2_SUBGRAPH_ID}`,
+      chainId: '8453',
+      explorerUrl: 'https://basescan.org',
+    },
+    'base-v4': {
+      name: 'Base',
+      dex: 'Uniswap V4',
+      subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${BASE_UNISWAP_V4_SUBGRAPH_ID}`,
+      chainId: '8453',
+      explorerUrl: 'https://basescan.org',
     },
     gnosis: {
       name: 'Gnosis',
@@ -100,12 +145,33 @@ export default function Home() {
       chainId: '100',
       explorerUrl: 'https://gnosisscan.io',
     },
-    base: {
-      name: 'Base',
+    arbitrum: {
+      name: 'Arbitrum',
       dex: 'Uniswap V3',
-      subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${BASE_UNISWAP_V3_SUBGRAPH_ID}`,
-      chainId: '8453',
-      explorerUrl: 'https://basescan.org',
+      subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${ARBITRUM_UNISWAP_V3_SUBGRAPH_ID}`,
+      chainId: '42161',
+      explorerUrl: 'https://arbiscan.io',
+    },
+    bnb: {
+      name: 'BNB Chain',
+      dex: 'Uniswap V3',
+      subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${BNB_UNISWAP_V3_SUBGRAPH_ID}`,
+      chainId: '56',
+      explorerUrl: 'https://bscscan.com',
+    },
+    polygon: {
+      name: 'Polygon',
+      dex: 'Uniswap V3',
+      subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${POLYGON_UNISWAP_V3_SUBGRAPH_ID}`,
+      chainId: '137',
+      explorerUrl: 'https://polygonscan.com',
+    },
+    optimism: {
+      name: 'Optimism',
+      dex: 'Uniswap V3',
+      subgraphUrl: `https://gateway.thegraph.com/api/${GRAPH_API_KEY}/subgraphs/id/${OPTIMISM_UNISWAP_V3_SUBGRAPH_ID}`,
+      chainId: '10',
+      explorerUrl: 'https://optimistic.etherscan.io',
     },
   }
   
@@ -323,64 +389,25 @@ export default function Home() {
         <div id="search-section" className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 mb-8">
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-300 mb-3">
-              Select Network
+              Select Network & DEX
             </label>
-            <div className="flex gap-4 justify-center flex-wrap">
-              <button
-                onClick={() => setSelectedNetwork('ethereum')}
-                className={`px-8 py-4 rounded-lg font-semibold transition-all duration-200 ${
-                  selectedNetwork === 'ethereum'
-                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg scale-105'
-                    : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                }`}
-              >
-                <div className="flex flex-col items-center gap-2">
-                  <span className="text-lg">{NETWORKS.ethereum.name}</span>
-                  <span className="text-xs opacity-75">{NETWORKS.ethereum.dex}</span>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setSelectedNetwork('ethereum-v2')}
-                className={`px-8 py-4 rounded-lg font-semibold transition-all duration-200 ${
-                  selectedNetwork === 'ethereum-v2'
-                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg scale-105'
-                    : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                }`}
-              >
-                <div className="flex flex-col items-center gap-2">
-                  <span className="text-lg">{NETWORKS['ethereum-v2'].name}</span>
-                  <span className="text-xs opacity-75">{NETWORKS['ethereum-v2'].dex}</span>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setSelectedNetwork('gnosis')}
-                className={`px-8 py-4 rounded-lg font-semibold transition-all duration-200 ${
-                  selectedNetwork === 'gnosis'
-                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg scale-105'
-                    : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                }`}
-              >
-                <div className="flex flex-col items-center gap-2">
-                  <span className="text-lg">{NETWORKS.gnosis.name}</span>
-                  <span className="text-xs opacity-75">{NETWORKS.gnosis.dex}</span>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setSelectedNetwork('base')}
-                className={`px-8 py-4 rounded-lg font-semibold transition-all duration-200 ${
-                  selectedNetwork === 'base'
-                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg scale-105'
-                    : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                }`}
-              >
-                <div className="flex flex-col items-center gap-2">
-                  <span className="text-lg">{NETWORKS.base.name}</span>
-                  <span className="text-xs opacity-75">{NETWORKS.base.dex}</span>
-                </div>
-              </button>
+            <div className="flex gap-3 justify-center flex-wrap">
+              {(Object.keys(NETWORKS) as NetworkType[]).map((networkKey) => (
+                <button
+                  key={networkKey}
+                  onClick={() => setSelectedNetwork(networkKey)}
+                  className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                    selectedNetwork === networkKey
+                      ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-lg scale-105'
+                      : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-sm">{NETWORKS[networkKey].name}</span>
+                    <span className="text-xs opacity-75">{NETWORKS[networkKey].dex}</span>
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
 

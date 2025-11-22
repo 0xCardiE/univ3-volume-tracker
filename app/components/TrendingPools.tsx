@@ -56,11 +56,12 @@ export function TrendingPools({ apiKey, onSelectPool }: TrendingPoolsProps) {
       'eth': 'Ethereum',
       'base': 'Base',
       'gno': 'Gnosis',
-      'bsc': 'BSC',
-      'polygon': 'Polygon',
       'arbitrum': 'Arbitrum',
+      'bsc': 'BNB Chain',
+      'polygon': 'Polygon',
       'optimism': 'Optimism',
       'avalanche': 'Avalanche',
+      'solana': 'Solana',
     }
     return networkMap[network] || network.toUpperCase()
   }
