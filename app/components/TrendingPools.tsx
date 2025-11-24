@@ -12,6 +12,7 @@ export function TrendingPools({ apiKey, onSelectPool }: TrendingPoolsProps) {
   const [pools, setPools] = useState<TrendingPool[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [loadingProgress, setLoadingProgress] = useState<string>('')
   const [loadingMessage, setLoadingMessage] = useState('Initializing...')
 
   useEffect(() => {
