@@ -5,7 +5,7 @@ import { fetchTrendingPools, type TrendingPool } from '../utils/coingecko'
 
 interface TrendingPoolsProps {
   apiKey: string
-  onSelectPool: (address: string, network: string) => void
+  onSelectPool: (address: string, network: string, dexId: string) => void
 }
 
 export function TrendingPools({ apiKey, onSelectPool }: TrendingPoolsProps) {
@@ -108,7 +108,7 @@ export function TrendingPools({ apiKey, onSelectPool }: TrendingPoolsProps) {
         {pools.map((pool) => (
           <button
             key={pool.id}
-            onClick={() => onSelectPool(pool.address, pool.network)}
+            onClick={() => onSelectPool(pool.address, pool.network, pool.dexId || '')}
             className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-pink-500/50 rounded-xl p-4 transition-all duration-200 text-left group"
           >
             {/* Header */}

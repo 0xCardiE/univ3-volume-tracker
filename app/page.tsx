@@ -68,21 +68,35 @@ export default function Home() {
     setShowConfigModal(true)
   }
 
-  const handleSelectPool = (address: string, network: string) => {
-    // Map CoinGecko network IDs to our network types
-    const networkMap: Record<string, NetworkType> = {
-      'eth': 'ethereum',
-      'base': 'base',
-      'gno': 'gnosis',
-      'arbitrum': 'arbitrum',
-      'bsc': 'bnb',
-      'polygon': 'polygon',
-      'optimism': 'optimism',
+  const handleSelectPool = (address: string, network: string, dexId: string) => {
+    // Map CoinGecko network + DEX combination to our network types
+    console.log('🎯 handleSelectPool:', { address, network, dexId })
+    
+    let selectedNetworkKey: NetworkType = 'ethereum'
+    
+    // Match network + dex to the correct network key
+    if (network === 'eth') {
+      if (dexId === 'uniswap_v2') selectedNetworkKey = 'ethereum-v2'
+      else if (dexId === 'uniswap_v4') selectedNetworkKey = 'ethereum-v4'
+      else selectedNetworkKey = 'ethereum' // v3 default
+    } else if (network === 'base') {
+      if (dexId === 'uniswap_v2') selectedNetworkKey = 'base-v2'
+      else if (dexId === 'uniswap_v4') selectedNetworkKey = 'base-v4'
+      else selectedNetworkKey = 'base' // v3 default
+    } else if (network === 'gno') {
+      selectedNetworkKey = 'gnosis'
+    } else if (network === 'arbitrum') {
+      selectedNetworkKey = 'arbitrum'
+    } else if (network === 'bsc') {
+      selectedNetworkKey = 'bnb'
+    } else if (network === 'polygon') {
+      selectedNetworkKey = 'polygon'
+    } else if (network === 'optimism') {
+      selectedNetworkKey = 'optimism'
     }
     
-    if (networkMap[network]) {
-      setSelectedNetwork(networkMap[network])
-    }
+    console.log('🎯 Selected network key:', selectedNetworkKey)
+    setSelectedNetwork(selectedNetworkKey)
     
     setPairAddress(address)
     setSearchedAddress(address.toLowerCase())
@@ -438,15 +452,23 @@ export default function Home() {
           </div>
         </div>
 
-        {searchedAddress && (
-          <VolumeTable 
-            key={`${selectedNetwork}-${searchedAddress}`}
-            pairAddress={searchedAddress}
-            subgraphUrl={currentNetwork.subgraphUrl}
-            chainId={currentNetwork.chainId}
-            explorerUrl={currentNetwork.explorerUrl}
-          />
-        )}
+        {searchedAddress && (() => {
+          const detectedVersion = currentNetwork.dex.toLowerCase().includes('v2') ? 'v2' : currentNetwork.dex.toLowerCase().includes('v4') ? 'v4' : 'v3'
+          console.log('🎯 Selected Network:', selectedNetwork)
+          console.log('🎯 Current Network DEX:', currentNetwork.dex)
+          console.log('🎯 Detected Version:', detectedVersion)
+          
+          return (
+            <VolumeTable 
+              key={`${selectedNetwork}-${searchedAddress}`}
+              pairAddress={searchedAddress}
+              subgraphUrl={currentNetwork.subgraphUrl}
+              chainId={currentNetwork.chainId}
+              explorerUrl={currentNetwork.explorerUrl}
+              dexVersion={detectedVersion}
+            />
+          )
+        })()}
       </div>
     </main>
   )

@@ -27,11 +27,12 @@ interface VolumeTableProps {
   subgraphUrl: string
   chainId: string
   explorerUrl: string
+  dexVersion?: string // Optional: 'v2', 'v3', 'v4'
 }
 
 type DayRange = 30 | 60 | 90 | 120 | 365
 
-export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: VolumeTableProps) {
+export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl, dexVersion }: VolumeTableProps) {
   const [data, setData] = useState<DayData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -62,7 +63,7 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl }: 
         // Set the explorer config
         setExplorerConfig(chainId, explorerUrl)
         
-        const result = await fetchPairDayData(pairAddress.toLowerCase(), dayRange, subgraphUrl)
+        const result = await fetchPairDayData(pairAddress.toLowerCase(), dayRange, subgraphUrl, dexVersion)
         setData(result.dayData)
         setPairInfo(result.pairInfo)
       } catch (err) {
