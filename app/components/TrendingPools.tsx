@@ -12,6 +12,7 @@ export function TrendingPools({ apiKey, onSelectPool }: TrendingPoolsProps) {
   const [pools, setPools] = useState<TrendingPool[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [loadingMessage, setLoadingMessage] = useState('Initializing...')
 
   useEffect(() => {
     const loadPools = async () => {
@@ -23,9 +24,12 @@ export function TrendingPools({ apiKey, onSelectPool }: TrendingPoolsProps) {
 
       setLoading(true)
       setError(null)
+      setLoadingMessage('Connecting to CoinGecko...')
       
       try {
-        const data = await fetchTrendingPools(apiKey)
+        const data = await fetchTrendingPools(apiKey, (message: string) => {
+          setLoadingMessage(message)
+        })
         setPools(data)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch trending pools')
@@ -71,7 +75,8 @@ export function TrendingPools({ apiKey, onSelectPool }: TrendingPoolsProps) {
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-12">
         <div className="flex flex-col items-center justify-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-pink-500 mb-4"></div>
-          <p className="text-gray-300 text-lg">Loading trending pools...</p>
+          <p className="text-gray-300 text-lg mb-2">Loading trending pools...</p>
+          <p className="text-gray-400 text-sm animate-pulse">{loadingMessage}</p>
         </div>
       </div>
     )
