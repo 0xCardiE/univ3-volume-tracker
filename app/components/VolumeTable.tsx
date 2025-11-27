@@ -121,6 +121,31 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl, de
 
   const summaries = calculateSummaries()
 
+  // Determine which token to display in the price chart
+  // We want to show the price of the non-stablecoin/non-WETH token
+  const getDisplayToken = () => {
+    if (!pairInfo) return { token: 'token0', symbol: 'Token0', isToken0: true }
+    
+    const stableTokens = ['WETH', 'USDC', 'USDT', 'WETH.e', 'USDC.e', 'USDT.e']
+    const token0Upper = pairInfo.token0.toUpperCase()
+    const token1Upper = pairInfo.token1.toUpperCase()
+    
+    // Check if token0 is a stablecoin/WETH - if so, show token1
+    if (stableTokens.includes(token0Upper)) {
+      return { token: 'token1', symbol: pairInfo.token1, isToken0: false }
+    }
+    
+    // Check if token1 is a stablecoin/WETH - if so, show token0
+    if (stableTokens.includes(token1Upper)) {
+      return { token: 'token0', symbol: pairInfo.token0, isToken0: true }
+    }
+    
+    // Default to token0 if neither is a stablecoin/WETH
+    return { token: 'token0', symbol: pairInfo.token0, isToken0: true }
+  }
+
+  const displayToken = getDisplayToken()
+
   const handleFetchContractInfo = async () => {
     if (contractInfo) {
       // Toggle visibility if already loaded
@@ -440,17 +465,21 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl, de
         Showing {data.length} days of trading data
       </div>
 
-      {/* USD Price Chart for Token0 (BZZ/Swarm) */}
+      {/* USD Price Chart - Shows the non-stablecoin/non-WETH token */}
       <div className="mt-8 bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8">
-        <h3 className="text-2xl font-bold text-white mb-2">{pairInfo?.token0 || 'Token0'} Price Chart (USD)</h3>
-        <p className="text-gray-400 text-sm mb-6">Historical price of {pairInfo?.token0} in US Dollars (calculated from pool volume)</p>
+        <h3 className="text-2xl font-bold text-white mb-2">{displayToken.symbol} Price Chart (USD)</h3>
+        <p className="text-gray-400 text-sm mb-6">Historical price of {displayToken.symbol} in US Dollars (calculated from pool volume)</p>
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={[...data].reverse().map(day => ({
             ...day,
-            // Calculate USD price: volumeUSD / volumeToken0 = USD per token
-            calculatedPrice: parseFloat(day.volumeUSD) > 0 && parseFloat(day.volumeToken0) > 0 
-              ? parseFloat(day.volumeUSD) / parseFloat(day.volumeToken0)
-              : 0
+            // Calculate USD price based on which token we're displaying
+            calculatedPrice: displayToken.isToken0
+              ? (parseFloat(day.volumeUSD) > 0 && parseFloat(day.volumeToken0) > 0 
+                  ? parseFloat(day.volumeUSD) / parseFloat(day.volumeToken0)
+                  : 0)
+              : (parseFloat(day.volumeUSD) > 0 && parseFloat(day.volumeToken1) > 0 
+                  ? parseFloat(day.volumeUSD) / parseFloat(day.volumeToken1)
+                  : 0)
           }))}>
             <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
             <XAxis 
@@ -485,7 +514,7 @@ export function VolumeTable({ pairAddress, subgraphUrl, chainId, explorerUrl, de
               stroke="#EC4899" 
               strokeWidth={3}
               dot={false}
-              name={`${pairInfo?.token0 || 'Token0'} Price (USD)`}
+              name={`${displayToken.symbol} Price (USD)`}
             />
           </LineChart>
         </ResponsiveContainer>
